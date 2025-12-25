@@ -3,6 +3,12 @@
   "version": "2.0",
   
   "devices": {
+    "usb_midi": {
+      "type": "usb_midi",
+      "enabled": true,
+      "alias": "USB_MIDI",
+      "comment": "USB MIDI input device"
+    },
     "din_midi": {
       "type": "uart_midi",
       "enabled": true,
@@ -19,10 +25,10 @@
       "description": "Simple USB to DIN MIDI routing",
       "routes": [
         {
-          "source": "14:0",
+          "source": "usb_midi",
           "destination": "din_midi",
           "enabled": true,
-          "comment": "Route USB MIDI (14:0) to DIN MIDI via UART"
+          "comment": "Route USB MIDI to DIN MIDI via UART"
         }
       ]
     }

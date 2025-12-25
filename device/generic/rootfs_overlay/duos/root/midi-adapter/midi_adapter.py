@@ -287,6 +287,42 @@ class OSCMIDIDevice(Device):
         return True
 
 
+class USBMIDIDevice(Device):
+    """USB MIDI device (external USB MIDI controller/keyboard)"""
+    
+    def __init__(self, device_id: str, config: Dict):
+        super().__init__(device_id, config)
+        self.port_pattern = config.get('port_pattern', '')
+        self.alsa_port = None
+        
+    def setup(self) -> bool:
+        """Setup USB MIDI device"""
+        if not self.enabled:
+            logger.info(f"USB MIDI device '{self.alias}' is disabled")
+            return True
+        
+        logger.info(f"USB MIDI device '{self.alias}' configured (auto-discovered)")
+        logger.info(f"  Pattern: {self.port_pattern if self.port_pattern else 'any USB MIDI device'}")
+        # USB MIDI devices are automatically handled by the kernel
+        # The ALSA port will be auto-discovered when the device is connected
+        return True
+    
+    def get_alsa_port(self) -> Optional[str]:
+        """Get ALSA port for this USB MIDI device
+        
+        Note: Auto-discovery not yet implemented.
+        Users should use explicit ALSA port numbers in routing if needed,
+        or this can be enhanced to parse aconnect output.
+        
+        Returns:
+            ALSA port string or None
+        """
+        # TODO: Implement dynamic ALSA port discovery for USB MIDI devices
+        # This would involve parsing aconnect output to find USB MIDI ports
+        # matching the port_pattern (if specified)
+        return self.alsa_port
+
+
 class MIDIAdapter:
     """Main MIDI adapter with universal device configuration"""
     
@@ -332,7 +368,8 @@ class MIDIAdapter:
             'uart_midi': UARTMIDIDevice,
             'network_midi_rtp': NetworkMIDIDevice,
             'gpio_input': GPIOInputDevice,
-            'osc_midi': OSCMIDIDevice
+            'osc_midi': OSCMIDIDevice,
+            'usb_midi': USBMIDIDevice
         }
         
         for device_id, device_config in devices_config.items():

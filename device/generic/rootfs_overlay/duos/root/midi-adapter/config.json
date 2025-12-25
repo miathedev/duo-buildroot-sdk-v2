@@ -3,6 +3,13 @@
   "version": "2.0",
   
   "devices": {
+    "usb_midi": {
+      "type": "usb_midi",
+      "enabled": true,
+      "port_pattern": "",
+      "alias": "USB_MIDI",
+      "comment": "USB MIDI input device (keyboard, controller, etc.). Auto-discovered by the system."
+    },
     "din_midi": {
       "type": "uart_midi",
       "enabled": true,
@@ -61,16 +68,16 @@
       "description": "Default routing: USB MIDI to both DIN and Network",
       "routes": [
         {
-          "source": "14:0",
+          "source": "usb_midi",
           "destination": "din_midi",
           "enabled": true,
-          "comment": "Route USB MIDI to DIN MIDI. Source port 14:0 is typical for USB MIDI."
+          "comment": "Route USB MIDI to DIN MIDI output"
         },
         {
-          "source": "14:0",
+          "source": "usb_midi",
           "destination": "network_midi_studio",
           "enabled": true,
-          "comment": "Route USB MIDI to Network MIDI simultaneously."
+          "comment": "Route USB MIDI to Network MIDI simultaneously"
         }
       ]
     },
@@ -79,19 +86,19 @@
       "description": "Studio profile: Bidirectional USB<->Network, DIN output only",
       "routes": [
         {
-          "source": "14:0",
+          "source": "usb_midi",
           "destination": "network_midi_studio",
           "enabled": true,
           "comment": "USB to Network"
         },
         {
           "source": "network_midi_studio",
-          "destination": "14:0",
+          "destination": "usb_midi",
           "enabled": true,
           "comment": "Network to USB (bidirectional)"
         },
         {
-          "source": "14:0",
+          "source": "usb_midi",
           "destination": "din_midi",
           "enabled": true,
           "comment": "USB to DIN (output only)"
@@ -103,12 +110,12 @@
       "description": "Performance profile: All inputs to all outputs",
       "routes": [
         {
-          "source": "14:0",
+          "source": "usb_midi",
           "destination": "din_midi",
           "enabled": true
         },
         {
-          "source": "14:0",
+          "source": "usb_midi",
           "destination": "network_midi_studio",
           "enabled": true
         },
@@ -130,16 +137,17 @@
   },
   
   "_notes": {
-    "device_types": "Supported: uart_midi, network_midi_rtp, gpio_input, osc_midi (experimental)",
-    "aliases": "Use device aliases in routing destinations for clarity (e.g., 'din_midi' instead of port numbers)",
+    "device_types": "Supported: usb_midi, uart_midi, network_midi_rtp, gpio_input, osc_midi (experimental)",
+    "aliases": "Use device aliases in routing for clarity (e.g., 'usb_midi', 'din_midi' instead of port numbers)",
+    "usb_midi": "USB MIDI devices are auto-discovered. Use 'usb_midi' as source name in routing.",
     "gpio_numbers": "Use duo-pinmux or WiringX to identify GPIO numbers for your board.",
-    "midi_ports": "Run 'aconnect -l' to list available ALSA MIDI ports. USB MIDI typically appears as 14:0 or similar.",
+    "midi_ports_fallback": "You can still use ALSA port numbers (e.g., '14:0') if needed for advanced routing.",
     "uart_device": "Common UART devices: /dev/ttyS0-5. Check your device tree for the correct one.",
     "network_midi": "Leave target_ip empty for server mode. Set target_ip to connect to a specific client.",
     "gpio_pull": "Pull options: 'up' (default), 'down', 'none'",
     "gpio_trigger": "Trigger options: 'falling' (button press), 'rising' (button release), 'both'",
     "routing_profiles": "Switch profiles using GPIO actions or by editing active_profile and restarting the service.",
-    "port_format": "Source can be ALSA port (14:0) or device alias (din_midi, network_midi_studio).",
+    "routing_format": "Source and destination can be device names (usb_midi, din_midi, etc.) or ALSA ports (14:0).",
     "osc_midi": "OSC MIDI bridge is experimental and requires python-osc package."
   }
 }

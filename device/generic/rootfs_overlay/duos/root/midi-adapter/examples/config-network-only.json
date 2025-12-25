@@ -3,6 +3,12 @@
   "version": "2.0",
   
   "devices": {
+    "usb_midi": {
+      "type": "usb_midi",
+      "enabled": true,
+      "alias": "USB_MIDI",
+      "comment": "USB MIDI input device"
+    },
     "network_midi_studio": {
       "type": "network_midi_rtp",
       "enabled": true,
@@ -20,10 +26,10 @@
       "description": "Simple USB to Network routing",
       "routes": [
         {
-          "source": "14:0",
+          "source": "usb_midi",
           "destination": "network_midi_studio",
           "enabled": true,
-          "comment": "Route USB MIDI (14:0) to Network MIDI"
+          "comment": "Route USB MIDI to Network MIDI"
         }
       ]
     }

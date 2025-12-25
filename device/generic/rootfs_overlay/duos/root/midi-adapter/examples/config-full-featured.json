@@ -3,6 +3,12 @@
   "version": "2.0",
   
   "devices": {
+    "usb_midi": {
+      "type": "usb_midi",
+      "enabled": true,
+      "alias": "USB_MIDI",
+      "comment": "USB MIDI input device"
+    },
     "din_midi": {
       "type": "uart_midi",
       "enabled": true,
@@ -52,13 +58,13 @@
       "description": "All inputs to all outputs",
       "routes": [
         {
-          "source": "14:0",
+          "source": "usb_midi",
           "destination": "din_midi",
           "enabled": true,
           "comment": "USB to DIN MIDI"
         },
         {
-          "source": "14:0",
+          "source": "usb_midi",
           "destination": "network_midi_studio",
           "enabled": true,
           "comment": "USB to Network MIDI"
@@ -70,18 +76,18 @@
       "description": "Studio setup with bidirectional network MIDI",
       "routes": [
         {
-          "source": "14:0",
+          "source": "usb_midi",
           "destination": "network_midi_studio",
           "enabled": true
         },
         {
           "source": "network_midi_studio",
-          "destination": "14:0",
+          "destination": "usb_midi",
           "enabled": true,
           "comment": "Bidirectional routing"
         },
         {
-          "source": "14:0",
+          "source": "usb_midi",
           "destination": "din_midi",
           "enabled": true
         }
