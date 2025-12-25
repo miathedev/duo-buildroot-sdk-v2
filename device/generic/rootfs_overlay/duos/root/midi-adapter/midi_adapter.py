@@ -212,15 +212,6 @@ class GPIOInputDevice(Device):
         except Exception as e:
             logger.error(f"Failed to setup GPIO device '{self.alias}': {e}")
             return False
-            
-            with open(f"{self.gpio_path}/edge", "w") as f:
-                f.write(edge)
-                
-            logger.info(f"GPIO device '{self.alias}' configured: GPIO{self.gpio_num}, pull={self.pull}, trigger={self.trigger}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to setup GPIO device '{self.alias}': {e}")
-            return False
     
     def start_monitoring(self, callback):
         """Start monitoring GPIO in a separate thread"""
@@ -409,22 +400,6 @@ class MIDIAdapter:
         except Exception as e:
             logger.error(f"Failed to list MIDI ports: {e}")
             return ""
-
-            
-            # Parse output to map device aliases to ALSA ports
-            # This is a simplified implementation
-            # In production, you'd parse the output more robustly
-            for line in result.stdout.split('\n'):
-                if 'client' in line.lower():
-                    # Extract port information
-                    # Format: "client 14: 'USB MIDI Device' [type=kernel]"
-                    # Store mapping for later use
-                    pass
-            
-            return result.stdout
-        except Exception as e:
-            logger.error(f"Failed to list MIDI ports: {e}")
-            return ""
     
     def resolve_port(self, port_ref: str) -> Optional[str]:
         """Resolve port reference to ALSA port number
@@ -436,8 +411,10 @@ class MIDIAdapter:
             ALSA port string or None
         """
         # Check if it's already an ALSA port format (number:number)
-        if ':' in port_ref and port_ref.replace(':', '').isdigit():
-            return port_ref
+        if ':' in port_ref:
+            parts = port_ref.split(':')
+            if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+                return port_ref
         
         # Check if it's a device alias
         if port_ref in self.device_ports:
