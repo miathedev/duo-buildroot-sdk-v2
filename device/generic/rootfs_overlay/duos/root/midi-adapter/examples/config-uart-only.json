@@ -1,26 +1,36 @@
 {
-  "description": "USB MIDI to DIN MIDI only (no network)",
-  "version": "1.0",
+  "description": "UART/DIN MIDI Only - USB MIDI to DIN MIDI converter",
+  "version": "2.0",
   
-  "uart_midi": {
-    "enabled": true,
-    "device": "/dev/ttyS4",
-    "comment": "Hardware UART for DIN MIDI output"
-  },
-  
-  "network_midi": {
-    "enabled": false,
-    "port": 5004,
-    "comment": "Network MIDI disabled"
-  },
-  
-  "gpio_buttons": [],
-  
-  "routing": [
-    {
-      "source": "14:0",
-      "destination": "20:0",
-      "comment": "Route USB MIDI (14:0) to UART/DIN MIDI (20:0)"
+  "devices": {
+    "din_midi": {
+      "type": "uart_midi",
+      "enabled": true,
+      "device": "/dev/ttyS4",
+      "baudrate": 31250,
+      "alias": "DIN_MIDI",
+      "comment": "Hardware UART for DIN MIDI output"
     }
-  ]
+  },
+  
+  "routing_profiles": {
+    "default": {
+      "enabled": true,
+      "description": "Simple USB to DIN MIDI routing",
+      "routes": [
+        {
+          "source": "14:0",
+          "destination": "din_midi",
+          "enabled": true,
+          "comment": "Route USB MIDI (14:0) to DIN MIDI via UART"
+        }
+      ]
+    }
+  },
+  
+  "settings": {
+    "active_profile": "default",
+    "auto_connect": true,
+    "log_level": "INFO"
+  }
 }

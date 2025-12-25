@@ -1,26 +1,37 @@
 {
-  "description": "Simple USB MIDI to Network MIDI bridge",
-  "version": "1.0",
+  "description": "Network MIDI Only - USB MIDI to Network MIDI bridge",
+  "version": "2.0",
   
-  "uart_midi": {
-    "enabled": false,
-    "device": "/dev/ttyS4",
-    "comment": "DIN MIDI disabled for this configuration"
-  },
-  
-  "network_midi": {
-    "enabled": true,
-    "port": 5004,
-    "comment": "Network MIDI enabled on default port"
-  },
-  
-  "gpio_buttons": [],
-  
-  "routing": [
-    {
-      "source": "14:0",
-      "destination": "128:0",
-      "comment": "Route USB MIDI (14:0) directly to Network MIDI (128:0)"
+  "devices": {
+    "network_midi_studio": {
+      "type": "network_midi_rtp",
+      "enabled": true,
+      "target_ip": "",
+      "port": 5004,
+      "multicast": false,
+      "alias": "NET_STUDIO",
+      "comment": "Network MIDI server mode - clients connect to board IP"
     }
-  ]
+  },
+  
+  "routing_profiles": {
+    "default": {
+      "enabled": true,
+      "description": "Simple USB to Network routing",
+      "routes": [
+        {
+          "source": "14:0",
+          "destination": "network_midi_studio",
+          "enabled": true,
+          "comment": "Route USB MIDI (14:0) to Network MIDI"
+        }
+      ]
+    }
+  },
+  
+  "settings": {
+    "active_profile": "default",
+    "auto_connect": true,
+    "log_level": "INFO"
+  }
 }

@@ -1,50 +1,145 @@
 {
-  "description": "MIDI Adapter Configuration for MilkV Duo S",
-  "version": "1.0",
+  "description": "MIDI Adapter Configuration for MilkV Duo S - Universal Device Format",
+  "version": "2.0",
   
-  "uart_midi": {
-    "enabled": true,
-    "device": "/dev/ttyS4",
-    "comment": "Hardware UART for DIN MIDI output. Default is ttyS4, adjust based on your hardware setup."
-  },
-  
-  "network_midi": {
-    "enabled": true,
-    "port": 5004,
-    "comment": "Network MIDI using RTP-MIDI protocol via aseqnet. Default port is 5004."
-  },
-  
-  "gpio_buttons": [
-    {
+  "devices": {
+    "din_midi": {
+      "type": "uart_midi",
+      "enabled": true,
+      "device": "/dev/ttyS4",
+      "baudrate": 31250,
+      "alias": "DIN_MIDI",
+      "comment": "Hardware UART for DIN MIDI. Standard MIDI baudrate is 31250."
+    },
+    "network_midi_studio": {
+      "type": "network_midi_rtp",
+      "enabled": true,
+      "target_ip": "",
+      "port": 5004,
+      "multicast": false,
+      "alias": "NET_STUDIO",
+      "comment": "Network MIDI using RTP-MIDI protocol. Leave target_ip empty for server mode."
+    },
+    "gpio_pedal": {
+      "type": "gpio_input",
+      "enabled": true,
       "gpio": 466,
+      "pull": "up",
+      "trigger": "falling",
+      "debounce_ms": 50,
+      "alias": "PEDAL_1",
       "action": "toggle_routing",
-      "comment": "Example GPIO button configuration. Adjust GPIO number based on your wiring."
+      "target": "all",
+      "comment": "GPIO button for footpedal control. Trigger on falling edge (button press)."
     },
-    {
+    "gpio_button2": {
+      "type": "gpio_input",
+      "enabled": true,
       "gpio": 467,
+      "pull": "up",
+      "trigger": "falling",
+      "debounce_ms": 50,
+      "alias": "BUTTON_2",
       "action": "reconnect",
-      "comment": "Example GPIO button to trigger MIDI reconnection."
-    }
-  ],
-  
-  "routing": [
-    {
-      "source": "14:0",
-      "destination": "20:0",
-      "comment": "Example: Route USB MIDI (14:0) to hardware UART MIDI (20:0). Use 'aconnect -l' to see available ports."
+      "target": "all",
+      "comment": "Second GPIO button for reconnecting MIDI devices."
     },
-    {
-      "source": "14:0",
-      "destination": "128:0",
-      "comment": "Example: Route USB MIDI (14:0) to network MIDI (128:0)."
+    "osc_bridge": {
+      "type": "osc_midi",
+      "enabled": false,
+      "target_ip": "127.0.0.1",
+      "target_port": 8000,
+      "listen_port": 9000,
+      "alias": "OSC_DAW",
+      "comment": "OSC to MIDI bridge (optional, requires additional dependencies)."
     }
-  ],
+  },
+  
+  "routing_profiles": {
+    "default": {
+      "enabled": true,
+      "description": "Default routing: USB MIDI to both DIN and Network",
+      "routes": [
+        {
+          "source": "14:0",
+          "destination": "din_midi",
+          "enabled": true,
+          "comment": "Route USB MIDI to DIN MIDI. Source port 14:0 is typical for USB MIDI."
+        },
+        {
+          "source": "14:0",
+          "destination": "network_midi_studio",
+          "enabled": true,
+          "comment": "Route USB MIDI to Network MIDI simultaneously."
+        }
+      ]
+    },
+    "studio": {
+      "enabled": false,
+      "description": "Studio profile: Bidirectional USB<->Network, DIN output only",
+      "routes": [
+        {
+          "source": "14:0",
+          "destination": "network_midi_studio",
+          "enabled": true,
+          "comment": "USB to Network"
+        },
+        {
+          "source": "network_midi_studio",
+          "destination": "14:0",
+          "enabled": true,
+          "comment": "Network to USB (bidirectional)"
+        },
+        {
+          "source": "14:0",
+          "destination": "din_midi",
+          "enabled": true,
+          "comment": "USB to DIN (output only)"
+        }
+      ]
+    },
+    "performance": {
+      "enabled": false,
+      "description": "Performance profile: All inputs to all outputs",
+      "routes": [
+        {
+          "source": "14:0",
+          "destination": "din_midi",
+          "enabled": true
+        },
+        {
+          "source": "14:0",
+          "destination": "network_midi_studio",
+          "enabled": true
+        },
+        {
+          "source": "network_midi_studio",
+          "destination": "din_midi",
+          "enabled": true
+        }
+      ]
+    }
+  },
+  
+  "settings": {
+    "active_profile": "default",
+    "auto_connect": true,
+    "reconnect_interval_sec": 5,
+    "log_level": "INFO",
+    "comment": "Global settings. auto_connect will automatically establish routes on startup."
+  },
   
   "_notes": {
+    "device_types": "Supported: uart_midi, network_midi_rtp, gpio_input, osc_midi (experimental)",
+    "aliases": "Use device aliases in routing destinations for clarity (e.g., 'din_midi' instead of port numbers)",
     "gpio_numbers": "Use duo-pinmux or WiringX to identify GPIO numbers for your board.",
-    "midi_ports": "Run 'aconnect -l' to list available ALSA MIDI ports and their addresses.",
+    "midi_ports": "Run 'aconnect -l' to list available ALSA MIDI ports. USB MIDI typically appears as 14:0 or similar.",
     "uart_device": "Common UART devices: /dev/ttyS0-5. Check your device tree for the correct one.",
-    "network_midi": "Clients can connect to <board-ip>:5004 using RTP-MIDI compatible software.",
-    "gpio_setup": "Remember to set GPIO direction to 'in' for button inputs."
+    "network_midi": "Leave target_ip empty for server mode. Set target_ip to connect to a specific client.",
+    "gpio_pull": "Pull options: 'up' (default), 'down', 'none'",
+    "gpio_trigger": "Trigger options: 'falling' (button press), 'rising' (button release), 'both'",
+    "routing_profiles": "Switch profiles using GPIO actions or by editing active_profile and restarting the service.",
+    "port_format": "Source can be ALSA port (14:0) or device alias (din_midi, network_midi_studio).",
+    "osc_midi": "OSC MIDI bridge is experimental and requires python-osc package."
   }
 }

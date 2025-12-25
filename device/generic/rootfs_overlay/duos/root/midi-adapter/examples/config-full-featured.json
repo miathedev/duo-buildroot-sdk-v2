@@ -1,48 +1,98 @@
 {
-  "description": "Full configuration with all features enabled",
-  "version": "1.0",
+  "description": "Full Featured - All devices with multiple routing profiles",
+  "version": "2.0",
   
-  "uart_midi": {
-    "enabled": true,
-    "device": "/dev/ttyS4",
-    "comment": "DIN MIDI output via UART"
-  },
-  
-  "network_midi": {
-    "enabled": true,
-    "port": 5004,
-    "comment": "Network MIDI over Ethernet"
-  },
-  
-  "gpio_buttons": [
-    {
+  "devices": {
+    "din_midi": {
+      "type": "uart_midi",
+      "enabled": true,
+      "device": "/dev/ttyS4",
+      "baudrate": 31250,
+      "alias": "DIN_MIDI",
+      "comment": "Hardware UART for DIN MIDI"
+    },
+    "network_midi_studio": {
+      "type": "network_midi_rtp",
+      "enabled": true,
+      "target_ip": "",
+      "port": 5004,
+      "multicast": false,
+      "alias": "NET_STUDIO",
+      "comment": "Network MIDI server"
+    },
+    "gpio_pedal": {
+      "type": "gpio_input",
+      "enabled": true,
       "gpio": 466,
+      "pull": "up",
+      "trigger": "falling",
+      "debounce_ms": 50,
+      "alias": "PEDAL_1",
       "action": "toggle_routing",
-      "comment": "Button on GP0 - Toggle MIDI routing"
+      "target": "all",
+      "comment": "Footpedal for routing control"
     },
-    {
+    "gpio_button2": {
+      "type": "gpio_input",
+      "enabled": true,
       "gpio": 467,
+      "pull": "up",
+      "trigger": "falling",
+      "debounce_ms": 50,
+      "alias": "BUTTON_2",
       "action": "reconnect",
-      "comment": "Button on GP1 - Reconnect MIDI devices"
+      "target": "all",
+      "comment": "Button for reconnecting devices"
     }
-  ],
+  },
   
-  "routing": [
-    {
-      "source": "14:0",
-      "destination": "20:0",
-      "comment": "USB MIDI to DIN MIDI"
+  "routing_profiles": {
+    "default": {
+      "enabled": true,
+      "description": "All inputs to all outputs",
+      "routes": [
+        {
+          "source": "14:0",
+          "destination": "din_midi",
+          "enabled": true,
+          "comment": "USB to DIN MIDI"
+        },
+        {
+          "source": "14:0",
+          "destination": "network_midi_studio",
+          "enabled": true,
+          "comment": "USB to Network MIDI"
+        }
+      ]
     },
-    {
-      "source": "14:0",
-      "destination": "128:0",
-      "comment": "USB MIDI to Network MIDI"
+    "studio": {
+      "enabled": false,
+      "description": "Studio setup with bidirectional network MIDI",
+      "routes": [
+        {
+          "source": "14:0",
+          "destination": "network_midi_studio",
+          "enabled": true
+        },
+        {
+          "source": "network_midi_studio",
+          "destination": "14:0",
+          "enabled": true,
+          "comment": "Bidirectional routing"
+        },
+        {
+          "source": "14:0",
+          "destination": "din_midi",
+          "enabled": true
+        }
+      ]
     }
-  ],
+  },
   
-  "_notes": {
-    "description": "This configuration enables both DIN MIDI and Network MIDI outputs",
-    "midi_ports": "Use 'aconnect -l' to find actual port numbers on your system",
-    "gpio_setup": "Adjust GPIO numbers based on your physical wiring"
+  "settings": {
+    "active_profile": "default",
+    "auto_connect": true,
+    "reconnect_interval_sec": 5,
+    "log_level": "INFO"
   }
 }
