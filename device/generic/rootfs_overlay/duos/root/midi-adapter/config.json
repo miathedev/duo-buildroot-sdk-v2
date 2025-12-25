@@ -15,8 +15,9 @@
       "enabled": true,
       "device": "/dev/ttyS4",
       "baudrate": 31250,
+      "direction": "both",
       "alias": "DIN_MIDI",
-      "comment": "Hardware UART for DIN MIDI. Standard MIDI baudrate is 31250."
+      "comment": "Hardware UART for DIN MIDI. Direction: input, output, or both."
     },
     "network_midi_studio": {
       "type": "network_midi_rtp",
@@ -24,8 +25,9 @@
       "target_ip": "",
       "port": 5004,
       "multicast": false,
+      "direction": "both",
       "alias": "NET_STUDIO",
-      "comment": "Network MIDI using RTP-MIDI protocol. Leave target_ip empty for server mode."
+      "comment": "Network MIDI using RTP-MIDI protocol. Direction: input, output, or both. Leave target_ip empty for server mode."
     },
     "gpio_pedal": {
       "type": "gpio_input",
@@ -57,8 +59,9 @@
       "target_ip": "127.0.0.1",
       "target_port": 8000,
       "listen_port": 9000,
+      "direction": "both",
       "alias": "OSC_DAW",
-      "comment": "OSC to MIDI bridge (optional, requires additional dependencies)."
+      "comment": "OSC to MIDI bridge (optional, requires additional dependencies). Direction: input, output, or both."
     }
   },
   
@@ -139,6 +142,7 @@
   "_notes": {
     "device_types": "Supported: usb_midi, uart_midi, network_midi_rtp, gpio_input, osc_midi (experimental)",
     "aliases": "Use device aliases in routing for clarity (e.g., 'usb_midi', 'din_midi' instead of port numbers)",
+    "direction": "Direction options for uart_midi, network_midi_rtp, osc_midi: 'input' (receive only), 'output' (send only), 'both' (bidirectional)",
     "usb_midi": "USB MIDI devices are auto-discovered. Use 'usb_midi' as source name in routing.",
     "gpio_numbers": "Use duo-pinmux or WiringX to identify GPIO numbers for your board.",
     "midi_ports_fallback": "You can still use ALSA port numbers (e.g., '14:0') if needed for advanced routing.",

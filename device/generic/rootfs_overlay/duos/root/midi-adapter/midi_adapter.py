@@ -53,6 +53,7 @@ class UARTMIDIDevice(Device):
         super().__init__(device_id, config)
         self.uart_device = config.get('device', '/dev/ttyS4')
         self.baudrate = config.get('baudrate', 31250)
+        self.direction = config.get('direction', 'output')  # input, output, or both
         self.alsa_port = None
         
     def setup(self) -> bool:
@@ -68,7 +69,8 @@ class UARTMIDIDevice(Device):
                 str(self.baudrate), 'raw', '-echo', '-echoe', '-echok'
             ], check=True)
             
-            logger.info(f"UART device '{self.alias}' configured: {self.uart_device} @ {self.baudrate} baud")
+            direction_str = self.direction if self.direction in ['input', 'output', 'both'] else 'output'
+            logger.info(f"UART device '{self.alias}' configured: {self.uart_device} @ {self.baudrate} baud, direction={direction_str}")
             return True
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to configure UART device '{self.alias}': {e}")
@@ -97,6 +99,7 @@ class NetworkMIDIDevice(Device):
         self.target_ip = config.get('target_ip', '')
         self.port = config.get('port', 5004)
         self.multicast = config.get('multicast', False)
+        self.direction = config.get('direction', 'both')  # input, output, or both
         self.process = None
         self.alsa_port = None
         
@@ -111,11 +114,13 @@ class NetworkMIDIDevice(Device):
             if self.target_ip:
                 # Client mode - connect to specific IP
                 cmd = ['aseqnet', '-p', str(self.port), self.target_ip]
-                logger.info(f"Network MIDI '{self.alias}' connecting to {self.target_ip}:{self.port}")
+                mode_str = "client"
+                logger.info(f"Network MIDI '{self.alias}' connecting to {self.target_ip}:{self.port}, direction={self.direction}")
             else:
                 # Server mode - listen for connections
                 cmd = ['aseqnet', '-s', '-p', str(self.port)]
-                logger.info(f"Network MIDI '{self.alias}' server started on port {self.port}")
+                mode_str = "server"
+                logger.info(f"Network MIDI '{self.alias}' server started on port {self.port}, direction={self.direction}")
             
             self.process = subprocess.Popen(
                 cmd,
@@ -273,6 +278,7 @@ class OSCMIDIDevice(Device):
         self.target_ip = config.get('target_ip', '127.0.0.1')
         self.target_port = config.get('target_port', 8000)
         self.listen_port = config.get('listen_port', 9000)
+        self.direction = config.get('direction', 'both')  # input, output, or both
         
     def setup(self) -> bool:
         """Setup OSC MIDI bridge"""
@@ -281,7 +287,7 @@ class OSCMIDIDevice(Device):
             return True
         
         logger.warning(f"OSC MIDI device '{self.alias}' is experimental and requires python-osc package")
-        logger.info(f"OSC MIDI '{self.alias}': target={self.target_ip}:{self.target_port}, listen={self.listen_port}")
+        logger.info(f"OSC MIDI '{self.alias}': target={self.target_ip}:{self.target_port}, listen={self.listen_port}, direction={self.direction}")
         # OSC implementation would require python-osc library
         # Not implemented in this version
         return True

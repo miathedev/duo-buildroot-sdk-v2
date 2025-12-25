@@ -14,6 +14,7 @@
       "enabled": true,
       "device": "/dev/ttyS4",
       "baudrate": 31250,
+      "direction": "output",
       "alias": "DIN_MIDI",
       "comment": "Hardware UART for DIN MIDI output"
     }

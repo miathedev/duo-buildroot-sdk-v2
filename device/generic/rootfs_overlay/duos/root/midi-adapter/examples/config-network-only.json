@@ -15,8 +15,9 @@
       "target_ip": "",
       "port": 5004,
       "multicast": false,
+      "direction": "both",
       "alias": "NET_STUDIO",
-      "comment": "Network MIDI server mode - clients connect to board IP"
+      "comment": "Network MIDI server mode - clients connect to board IP. Bidirectional for both send and receive."
     }
   },
   
