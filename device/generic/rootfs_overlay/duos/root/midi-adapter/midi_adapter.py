@@ -16,6 +16,7 @@ import time
 import subprocess
 import threading
 import logging
+import select
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -25,6 +26,10 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger('midi-adapter')
+
+# Constants for process management
+DEBUG_MONITOR_TIMEOUT_SEC = 0.5  # Timeout for select() in debug monitor
+PROCESS_TERMINATE_TIMEOUT_SEC = 3  # Timeout for graceful process termination
 
 
 class Device:
@@ -534,14 +539,13 @@ class MIDIAdapter:
                 self.debug_processes.append(process)
             
             # Read and log MIDI events with timeout to allow thread termination
-            import select
             while self.running:
                 # Check if process is still running
                 if process.poll() is not None:
                     break
                 
                 # Use select with timeout to avoid blocking indefinitely
-                ready, _, _ = select.select([process.stdout], [], [], 0.5)
+                ready, _, _ = select.select([process.stdout], [], [], DEBUG_MONITOR_TIMEOUT_SEC)
                 if ready:
                     line = process.stdout.readline().strip()
                     if line and not line.startswith('Waiting') and not line.startswith('Source'):
@@ -552,7 +556,7 @@ class MIDIAdapter:
             if process.poll() is None:
                 process.terminate()
                 try:
-                    process.wait(timeout=2)
+                    process.wait(timeout=PROCESS_TERMINATE_TIMEOUT_SEC)
                 except subprocess.TimeoutExpired:
                     process.kill()
                     
@@ -716,7 +720,7 @@ class MIDIAdapter:
                         if process.poll() is None:
                             process.terminate()
                             try:
-                                process.wait(timeout=3)
+                                process.wait(timeout=PROCESS_TERMINATE_TIMEOUT_SEC)
                             except subprocess.TimeoutExpired:
                                 logger.warning("Debug process did not terminate, forcing kill")
                                 process.kill()
