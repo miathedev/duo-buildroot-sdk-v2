@@ -99,28 +99,32 @@ class NetworkMIDIDevice(Device):
         self.target_ip = config.get('target_ip', '')
         self.port = config.get('port', 5004)
         self.multicast = config.get('multicast', False)
-        self.direction = config.get('direction', 'both')  # input, output, or both
+        self.direction = config.get('direction', 'input')  # input (server) or output (client)
         self.process = None
         self.alsa_port = None
         
     def setup(self) -> bool:
-        """Start network MIDI server or client"""
+        """Start network MIDI server (input) or client (output)"""
         if not self.enabled:
             logger.info(f"Network MIDI device '{self.alias}' is disabled")
             return True
         
         try:
-            # Start aseqnet in server mode (empty target_ip) or client mode
-            if self.target_ip:
-                # Client mode - connect to specific IP
+            # Direction determines mode:
+            # - 'output': client mode (send MIDI to target_ip) - requires target_ip
+            # - 'input': server mode (receive MIDI from network) - listens for connections
+            
+            if self.direction == 'output':
+                # Output mode - client, send MIDI to target_ip
+                if not self.target_ip:
+                    logger.error(f"Network MIDI '{self.alias}': output direction requires target_ip")
+                    return False
                 cmd = ['aseqnet', '-p', str(self.port), self.target_ip]
-                mode_str = "client"
-                logger.info(f"Network MIDI '{self.alias}' connecting to {self.target_ip}:{self.port}, direction={self.direction}")
+                logger.info(f"Network MIDI '{self.alias}': output mode, sending to {self.target_ip}:{self.port}")
             else:
-                # Server mode - listen for connections
+                # Input mode (default) - server, receive MIDI from network
                 cmd = ['aseqnet', '-s', '-p', str(self.port)]
-                mode_str = "server"
-                logger.info(f"Network MIDI '{self.alias}' server started on port {self.port}, direction={self.direction}")
+                logger.info(f"Network MIDI '{self.alias}': input mode, listening on port {self.port}")
             
             self.process = subprocess.Popen(
                 cmd,

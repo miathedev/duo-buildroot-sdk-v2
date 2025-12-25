@@ -9,24 +9,43 @@
       "alias": "USB_MIDI",
       "comment": "USB MIDI input device"
     },
-    "din_midi": {
+    "din_midi_in": {
       "type": "uart_midi",
       "enabled": true,
       "device": "/dev/ttyS4",
       "baudrate": 31250,
-      "direction": "both",
-      "alias": "DIN_MIDI",
-      "comment": "Hardware UART for DIN MIDI - bidirectional"
+      "direction": "input",
+      "alias": "DIN_IN",
+      "comment": "Hardware UART for DIN MIDI input"
     },
-    "network_midi_studio": {
+    "din_midi_out": {
+      "type": "uart_midi",
+      "enabled": true,
+      "device": "/dev/ttyS5",
+      "baudrate": 31250,
+      "direction": "output",
+      "alias": "DIN_OUT",
+      "comment": "Hardware UART for DIN MIDI output"
+    },
+    "network_midi_receive": {
       "type": "network_midi_rtp",
       "enabled": true,
       "target_ip": "",
       "port": 5004,
       "multicast": false,
-      "direction": "both",
-      "alias": "NET_STUDIO",
-      "comment": "Network MIDI server - bidirectional"
+      "direction": "input",
+      "alias": "NET_IN",
+      "comment": "Network MIDI input - server mode, receives from network"
+    },
+    "network_midi_send": {
+      "type": "network_midi_rtp",
+      "enabled": true,
+      "target_ip": "192.168.1.100",
+      "port": 5005,
+      "multicast": false,
+      "direction": "output",
+      "alias": "NET_OUT",
+      "comment": "Network MIDI output - client mode, sends to specific IP"
     },
     "gpio_pedal": {
       "type": "gpio_input",
@@ -61,36 +80,48 @@
       "routes": [
         {
           "source": "usb_midi",
-          "destination": "din_midi",
+          "destination": "din_midi_out",
           "enabled": true,
-          "comment": "USB to DIN MIDI"
+          "comment": "USB to DIN MIDI output"
         },
         {
           "source": "usb_midi",
-          "destination": "network_midi_studio",
+          "destination": "network_midi_send",
           "enabled": true,
-          "comment": "USB to Network MIDI"
+          "comment": "USB to Network MIDI output"
+        },
+        {
+          "source": "din_midi_in",
+          "destination": "network_midi_send",
+          "enabled": true,
+          "comment": "DIN MIDI input to Network output"
+        },
+        {
+          "source": "network_midi_receive",
+          "destination": "din_midi_out",
+          "enabled": true,
+          "comment": "Network MIDI input to DIN output"
         }
       ]
     },
     "studio": {
       "enabled": false,
-      "description": "Studio setup with bidirectional network MIDI",
+      "description": "Studio setup with separate input/output channels",
       "routes": [
         {
           "source": "usb_midi",
-          "destination": "network_midi_studio",
+          "destination": "network_midi_send",
           "enabled": true
         },
         {
-          "source": "network_midi_studio",
+          "source": "network_midi_receive",
           "destination": "usb_midi",
           "enabled": true,
-          "comment": "Bidirectional routing"
+          "comment": "Separate network channels for send/receive"
         },
         {
           "source": "usb_midi",
-          "destination": "din_midi",
+          "destination": "din_midi_out",
           "enabled": true
         }
       ]

@@ -15,9 +15,9 @@
       "enabled": true,
       "device": "/dev/ttyS4",
       "baudrate": 31250,
-      "direction": "both",
+      "direction": "output",
       "alias": "DIN_MIDI",
-      "comment": "Hardware UART for DIN MIDI. Direction: input, output, or both."
+      "comment": "Hardware UART for DIN MIDI. Direction: input (receive), output (send), or both (bidirectional)."
     },
     "network_midi_studio": {
       "type": "network_midi_rtp",
@@ -25,9 +25,9 @@
       "target_ip": "",
       "port": 5004,
       "multicast": false,
-      "direction": "both",
+      "direction": "input",
       "alias": "NET_STUDIO",
-      "comment": "Network MIDI using RTP-MIDI protocol. Direction: input, output, or both. Leave target_ip empty for server mode."
+      "comment": "Network MIDI using RTP-MIDI. Direction 'input' = server mode (receive), 'output' = client mode (send to target_ip)."
     },
     "gpio_pedal": {
       "type": "gpio_input",
@@ -59,9 +59,9 @@
       "target_ip": "127.0.0.1",
       "target_port": 8000,
       "listen_port": 9000,
-      "direction": "both",
+      "direction": "input",
       "alias": "OSC_DAW",
-      "comment": "OSC to MIDI bridge (optional, requires additional dependencies). Direction: input, output, or both."
+      "comment": "OSC to MIDI bridge (optional, requires additional dependencies). Direction: input (receive OSC), output (send OSC), or both."
     }
   },
   
@@ -142,12 +142,14 @@
   "_notes": {
     "device_types": "Supported: usb_midi, uart_midi, network_midi_rtp, gpio_input, osc_midi (experimental)",
     "aliases": "Use device aliases in routing for clarity (e.g., 'usb_midi', 'din_midi' instead of port numbers)",
-    "direction": "Direction options for uart_midi, network_midi_rtp, osc_midi: 'input' (receive only), 'output' (send only), 'both' (bidirectional)",
+    "direction_uart": "uart_midi direction: 'input' (receive only), 'output' (send only), 'both' (bidirectional)",
+    "direction_network": "network_midi_rtp direction: 'input' (server mode, receive from network), 'output' (client mode, send to target_ip - requires target_ip)",
+    "direction_osc": "osc_midi direction: 'input' (receive OSC), 'output' (send OSC), 'both' (bidirectional)",
     "usb_midi": "USB MIDI devices are auto-discovered. Use 'usb_midi' as source name in routing.",
     "gpio_numbers": "Use duo-pinmux or WiringX to identify GPIO numbers for your board.",
     "midi_ports_fallback": "You can still use ALSA port numbers (e.g., '14:0') if needed for advanced routing.",
     "uart_device": "Common UART devices: /dev/ttyS0-5. Check your device tree for the correct one.",
-    "network_midi": "Leave target_ip empty for server mode. Set target_ip to connect to a specific client.",
+    "network_midi": "Direction 'input' = server (no target_ip). Direction 'output' = client (requires target_ip).",
     "gpio_pull": "Pull options: 'up' (default), 'down', 'none'",
     "gpio_trigger": "Trigger options: 'falling' (button press), 'rising' (button release), 'both'",
     "routing_profiles": "Switch profiles using GPIO actions or by editing active_profile and restarting the service.",
