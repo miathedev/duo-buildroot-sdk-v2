@@ -75,9 +75,17 @@ class UARTMIDIDevice(Device):
             return False
     
     def get_alsa_port(self) -> Optional[str]:
-        """Get ALSA port for this UART device"""
-        # UART MIDI typically appears as a hardware port in ALSA
-        # This would need to be discovered dynamically
+        """Get ALSA port for this UART device
+        
+        Note: Automatic port discovery not yet implemented.
+        Users should use ALSA port numbers directly in routing config.
+        
+        Returns:
+            ALSA port string or None
+        """
+        # TODO: Implement dynamic ALSA port discovery for UART MIDI devices
+        # This would involve parsing aconnect output to find the hardware
+        # MIDI port associated with this UART device
         return self.alsa_port
 
 
@@ -124,13 +132,30 @@ class NetworkMIDIDevice(Device):
     def cleanup(self):
         """Stop network MIDI process"""
         if self.process:
-            self.process.terminate()
-            self.process.wait(timeout=5)
-            logger.info(f"Network MIDI '{self.alias}' stopped")
+            try:
+                self.process.terminate()
+                try:
+                    self.process.wait(timeout=5)
+                    logger.info(f"Network MIDI '{self.alias}' stopped")
+                except subprocess.TimeoutExpired:
+                    logger.warning(f"Network MIDI '{self.alias}' did not terminate gracefully, forcing kill")
+                    self.process.kill()
+                    self.process.wait()
+            except Exception as e:
+                logger.error(f"Error stopping network MIDI '{self.alias}': {e}")
     
     def get_alsa_port(self) -> Optional[str]:
-        """Get ALSA port for this network device"""
-        # Network MIDI creates a client port that needs to be discovered
+        """Get ALSA port for this network device
+        
+        Note: Automatic port discovery not yet implemented.
+        Users should use ALSA port numbers directly in routing config.
+        
+        Returns:
+            ALSA port string or None
+        """
+        # TODO: Implement dynamic ALSA port discovery for aseqnet
+        # This would involve parsing aconnect output to find the client
+        # port created by the aseqnet process
         return self.alsa_port
 
 
@@ -167,6 +192,10 @@ class GPIOInputDevice(Device):
             with open(f"{self.gpio_path}/direction", "w") as f:
                 f.write("in")
             
+            # Note: GPIO pull-up/pull-down configuration is typically done via
+            # device tree or hardware configuration. The 'pull' parameter in config
+            # documents the expected hardware configuration.
+            
             # Set edge detection based on trigger configuration
             edge_map = {
                 'falling': 'falling',
@@ -174,6 +203,15 @@ class GPIOInputDevice(Device):
                 'both': 'both'
             }
             edge = edge_map.get(self.trigger, 'falling')
+            
+            with open(f"{self.gpio_path}/edge", "w") as f:
+                f.write(edge)
+                
+            logger.info(f"GPIO device '{self.alias}' configured: GPIO{self.gpio_num}, trigger={self.trigger} (pull={self.pull} expected in hardware)")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to setup GPIO device '{self.alias}': {e}")
+            return False
             
             with open(f"{self.gpio_path}/edge", "w") as f:
                 f.write(edge)
@@ -341,7 +379,14 @@ class MIDIAdapter:
             return False
     
     def discover_alsa_ports(self):
-        """Discover ALSA MIDI ports and map device aliases"""
+        """Discover ALSA MIDI ports and map device aliases
+        
+        Note: Automatic ALSA port discovery for device aliases is not yet implemented.
+        Users should use ALSA port numbers (e.g., "14:0") in routing configuration.
+        Device aliases will be resolved if the device's get_alsa_port() method is implemented.
+        
+        Future enhancement: Parse aconnect output to automatically map device names to ports.
+        """
         try:
             result = subprocess.run(
                 ['aconnect', '-l'],
@@ -352,6 +397,19 @@ class MIDIAdapter:
             
             logger.info("Available ALSA MIDI ports:")
             logger.info(result.stdout)
+            
+            # TODO: Implement automatic port discovery
+            # Parse aconnect output to map device names/aliases to ALSA port numbers
+            # Example parsing:
+            # - Look for "client 14: 'USB MIDI Device'" to extract port "14:0"
+            # - Look for aseqnet process ports for network MIDI devices
+            # - Store mappings in self.device_ports for use in resolve_port()
+            
+            return result.stdout
+        except Exception as e:
+            logger.error(f"Failed to list MIDI ports: {e}")
+            return ""
+
             
             # Parse output to map device aliases to ALSA ports
             # This is a simplified implementation
@@ -378,7 +436,7 @@ class MIDIAdapter:
             ALSA port string or None
         """
         # Check if it's already an ALSA port format (number:number)
-        if ':' in port_ref and port_ref.replace(':', '').replace('.', '').isdigit():
+        if ':' in port_ref and port_ref.replace(':', '').isdigit():
             return port_ref
         
         # Check if it's a device alias
@@ -389,7 +447,9 @@ class MIDIAdapter:
         if port_ref in self.devices:
             device = self.devices[port_ref]
             if hasattr(device, 'get_alsa_port'):
-                return device.get_alsa_port()
+                alsa_port = device.get_alsa_port()
+                if alsa_port:
+                    return alsa_port
         
         logger.warning(f"Could not resolve port reference: {port_ref}")
         return port_ref  # Return as-is and let aconnect handle it
