@@ -63,7 +63,7 @@ cat /sys/firmware/devicetree/base/soc/gpio*/compatible
 ### Recommended Setup
 - Use pull-up resistors (10kΩ) to 3.3V
 - Connect button between GPIO and GND
-- Button press pulls GPIO LOW (falling edge)
+- Button press pulls GPIO low (falling edge)
 
 ## Configuring GPIO in Software
 

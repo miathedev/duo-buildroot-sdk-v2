@@ -239,7 +239,7 @@ class MIDIAdapter:
             action = button_config.get('action')
             
             if gpio_num is not None:
-                button = GPIOButton(gpio_num, lambda g: self.handle_button_press(g, action))
+                button = GPIOButton(gpio_num, lambda g, a=action: self.handle_button_press(g, a))
                 
                 if button.setup():
                     button.start_monitoring()

@@ -73,11 +73,11 @@ test_output() {
         if command -v amidi &> /dev/null; then
             # Send Note On, Middle C (60), Velocity 64
             echo "Sending Note On..."
-            echo -ne '\x90\x3C\x40' | amidi -p hw:0,0 -s 2>/dev/null
+            echo -ne '\x90\x3C\x40' | amidi -p "$DEST" -s 2>/dev/null
             sleep 1
             # Send Note Off
             echo "Sending Note Off..."
-            echo -ne '\x80\x3C\x00' | amidi -p hw:0,0 -s 2>/dev/null
+            echo -ne '\x80\x3C\x00' | amidi -p "$DEST" -s 2>/dev/null
         else
             echo "amidi not available for testing"
         fi
