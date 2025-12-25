@@ -1,0 +1,48 @@
+{
+  "description": "Full configuration with all features enabled",
+  "version": "1.0",
+  
+  "uart_midi": {
+    "enabled": true,
+    "device": "/dev/ttyS4",
+    "comment": "DIN MIDI output via UART"
+  },
+  
+  "network_midi": {
+    "enabled": true,
+    "port": 5004,
+    "comment": "Network MIDI over Ethernet"
+  },
+  
+  "gpio_buttons": [
+    {
+      "gpio": 466,
+      "action": "toggle_routing",
+      "comment": "Button on GP0 - Toggle MIDI routing"
+    },
+    {
+      "gpio": 467,
+      "action": "reconnect",
+      "comment": "Button on GP1 - Reconnect MIDI devices"
+    }
+  ],
+  
+  "routing": [
+    {
+      "source": "14:0",
+      "destination": "20:0",
+      "comment": "USB MIDI to DIN MIDI"
+    },
+    {
+      "source": "14:0",
+      "destination": "128:0",
+      "comment": "USB MIDI to Network MIDI"
+    }
+  ],
+  
+  "_notes": {
+    "description": "This configuration enables both DIN MIDI and Network MIDI outputs",
+    "midi_ports": "Use 'aconnect -l' to find actual port numbers on your system",
+    "gpio_setup": "Adjust GPIO numbers based on your physical wiring"
+  }
+}

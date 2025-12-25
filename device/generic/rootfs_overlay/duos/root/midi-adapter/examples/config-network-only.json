@@ -1,0 +1,26 @@
+{
+  "description": "Simple USB MIDI to Network MIDI bridge",
+  "version": "1.0",
+  
+  "uart_midi": {
+    "enabled": false,
+    "device": "/dev/ttyS4",
+    "comment": "DIN MIDI disabled for this configuration"
+  },
+  
+  "network_midi": {
+    "enabled": true,
+    "port": 5004,
+    "comment": "Network MIDI enabled on default port"
+  },
+  
+  "gpio_buttons": [],
+  
+  "routing": [
+    {
+      "source": "14:0",
+      "destination": "128:0",
+      "comment": "Route USB MIDI (14:0) directly to Network MIDI (128:0)"
+    }
+  ]
+}

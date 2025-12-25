@@ -1,0 +1,26 @@
+{
+  "description": "USB MIDI to DIN MIDI only (no network)",
+  "version": "1.0",
+  
+  "uart_midi": {
+    "enabled": true,
+    "device": "/dev/ttyS4",
+    "comment": "Hardware UART for DIN MIDI output"
+  },
+  
+  "network_midi": {
+    "enabled": false,
+    "port": 5004,
+    "comment": "Network MIDI disabled"
+  },
+  
+  "gpio_buttons": [],
+  
+  "routing": [
+    {
+      "source": "14:0",
+      "destination": "20:0",
+      "comment": "Route USB MIDI (14:0) to UART/DIN MIDI (20:0)"
+    }
+  ]
+}
