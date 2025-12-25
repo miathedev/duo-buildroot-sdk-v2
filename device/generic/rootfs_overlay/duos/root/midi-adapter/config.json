@@ -136,7 +136,8 @@
     "auto_connect": true,
     "reconnect_interval_sec": 5,
     "log_level": "INFO",
-    "comment": "Global settings. auto_connect will automatically establish routes on startup."
+    "debug_midi": false,
+    "comment": "Global settings. auto_connect will automatically establish routes on startup. debug_midi enables detailed MIDI data logging."
   },
   
   "_notes": {
@@ -154,6 +155,7 @@
     "gpio_trigger": "Trigger options: 'falling' (button press), 'rising' (button release), 'both'",
     "routing_profiles": "Switch profiles using GPIO actions or by editing active_profile and restarting the service.",
     "routing_format": "Source and destination can be device names (usb_midi, din_midi, etc.) or ALSA ports (14:0).",
-    "osc_midi": "OSC MIDI bridge is experimental and requires python-osc package."
+    "osc_midi": "OSC MIDI bridge is experimental and requires python-osc package.",
+    "debug_midi": "Set debug_midi to true to enable detailed logging of all MIDI data and routes. Shows incoming/outgoing MIDI messages with route information."
   }
 }

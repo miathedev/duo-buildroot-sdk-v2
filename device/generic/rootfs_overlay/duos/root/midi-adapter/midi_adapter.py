@@ -345,6 +345,8 @@ class MIDIAdapter:
         self.routing_profiles = {}
         self.active_profile = None
         self.running = False
+        self.debug_midi = False
+        self.debug_processes = []
         
     def load_config(self) -> bool:
         """Load configuration from JSON file"""
@@ -355,6 +357,11 @@ class MIDIAdapter:
             # Set log level from config
             log_level = self.config.get('settings', {}).get('log_level', 'INFO')
             logger.setLevel(getattr(logging, log_level, logging.INFO))
+            
+            # Get debug_midi flag from settings
+            self.debug_midi = self.config.get('settings', {}).get('debug_midi', False)
+            if self.debug_midi:
+                logger.info("MIDI debugging is ENABLED - all MIDI data and routes will be logged")
             
             logger.info(f"Configuration loaded from {self.config_path}")
             logger.info(f"Config version: {self.config.get('version', '1.0')}")
@@ -478,6 +485,67 @@ class MIDIAdapter:
         logger.warning(f"Could not resolve port reference: {port_ref}")
         return port_ref  # Return as-is and let aconnect handle it
     
+    def start_debug_monitor(self, source_name: str, source_port: str, dest_name: str, dest_port: str):
+        """Start a debug monitor for a specific MIDI route
+        
+        Args:
+            source_name: Source device name/alias
+            source_port: Source ALSA port
+            dest_name: Destination device name/alias
+            dest_port: Destination ALSA port
+        """
+        try:
+            # Start aseqdump to monitor MIDI data on the source port
+            logger.info(f"  [DEBUG] Starting MIDI monitor for route: {source_name} -> {dest_name}")
+            
+            # Create a monitoring thread for this route
+            monitor_thread = threading.Thread(
+                target=self._debug_monitor_thread,
+                args=(source_name, source_port, dest_name, dest_port),
+                daemon=True
+            )
+            monitor_thread.start()
+            
+        except Exception as e:
+            logger.error(f"Failed to start debug monitor for {source_name} -> {dest_name}: {e}")
+    
+    def _debug_monitor_thread(self, source_name: str, source_port: str, dest_name: str, dest_port: str):
+        """Thread function to monitor MIDI data on a specific port
+        
+        Args:
+            source_name: Source device name/alias
+            source_port: Source ALSA port
+            dest_name: Destination device name/alias
+            dest_port: Destination ALSA port
+        """
+        try:
+            # Use aseqdump to capture MIDI data
+            process = subprocess.Popen(
+                ['aseqdump', '-p', source_port],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+                bufsize=1
+            )
+            
+            self.debug_processes.append(process)
+            
+            # Read and log MIDI events
+            for line in process.stdout:
+                if not self.running:
+                    break
+                
+                line = line.strip()
+                if line and not line.startswith('Waiting') and not line.startswith('Source'):
+                    # Log MIDI data with route information
+                    logger.info(f"[MIDI DEBUG] {source_name}({source_port}) -> {dest_name}({dest_port}): {line}")
+            
+            process.stdout.close()
+            process.wait()
+            
+        except Exception as e:
+            logger.error(f"Error in debug monitor thread for {source_name} -> {dest_name}: {e}")
+    
     def setup_routing_profile(self, profile_name: str) -> bool:
         """Setup MIDI routing for a specific profile"""
         profiles = self.config.get('routing_profiles', {})
@@ -520,10 +588,15 @@ class MIDIAdapter:
                         check=True,
                         capture_output=True
                     )
-                    logger.info(f"  Route: {source} ({source_port}) -> {destination} ({dest_port})")
+                    logger.info(f"  ✓ Route established: {source} ({source_port}) -> {destination} ({dest_port})")
                     success_count += 1
+                    
+                    # Start MIDI debug monitoring for this route if debug enabled
+                    if self.debug_midi:
+                        self.start_debug_monitor(source, source_port, destination, dest_port)
+                        
                 except subprocess.CalledProcessError as e:
-                    logger.warning(f"  Failed to establish route {source} -> {destination}: {e}")
+                    logger.warning(f"  ✗ Failed to establish route {source} -> {destination}: {e}")
         
         logger.info(f"Routing profile '{profile_name}' setup complete: {success_count}/{len(routes)} routes established")
         return success_count > 0
@@ -616,6 +689,17 @@ class MIDIAdapter:
     def cleanup(self):
         """Clean up all resources"""
         self.running = False
+        
+        # Stop debug monitor processes
+        if self.debug_processes:
+            logger.info("Stopping MIDI debug monitors...")
+            for process in self.debug_processes:
+                try:
+                    process.terminate()
+                    process.wait(timeout=2)
+                except Exception:
+                    pass
+            self.debug_processes.clear()
         
         # Cleanup all devices
         for device in self.devices.values():

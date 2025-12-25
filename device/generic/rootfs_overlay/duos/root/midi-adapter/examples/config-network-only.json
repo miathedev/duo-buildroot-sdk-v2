@@ -39,6 +39,7 @@
   "settings": {
     "active_profile": "default",
     "auto_connect": true,
-    "log_level": "INFO"
+    "log_level": "INFO",
+    "debug_midi": false
   }
 }

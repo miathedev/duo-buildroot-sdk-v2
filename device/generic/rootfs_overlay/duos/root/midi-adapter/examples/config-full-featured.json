@@ -132,6 +132,7 @@
     "active_profile": "default",
     "auto_connect": true,
     "reconnect_interval_sec": 5,
-    "log_level": "INFO"
+    "log_level": "INFO",
+    "debug_midi": false
   }
 }
