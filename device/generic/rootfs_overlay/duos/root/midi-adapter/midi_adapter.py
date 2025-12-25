@@ -347,6 +347,7 @@ class MIDIAdapter:
         self.running = False
         self.debug_midi = False
         self.debug_processes = []
+        self.debug_lock = threading.Lock()
         
     def load_config(self) -> bool:
         """Load configuration from JSON file"""
@@ -528,20 +529,35 @@ class MIDIAdapter:
                 bufsize=1
             )
             
-            self.debug_processes.append(process)
+            # Add to debug processes list with thread safety
+            with self.debug_lock:
+                self.debug_processes.append(process)
             
-            # Read and log MIDI events
-            for line in process.stdout:
-                if not self.running:
+            # Read and log MIDI events with timeout to allow thread termination
+            import select
+            while self.running:
+                # Check if process is still running
+                if process.poll() is not None:
                     break
                 
-                line = line.strip()
-                if line and not line.startswith('Waiting') and not line.startswith('Source'):
-                    # Log MIDI data with route information
-                    logger.info(f"[MIDI DEBUG] {source_name}({source_port}) -> {dest_name}({dest_port}): {line}")
+                # Use select with timeout to avoid blocking indefinitely
+                ready, _, _ = select.select([process.stdout], [], [], 0.5)
+                if ready:
+                    line = process.stdout.readline().strip()
+                    if line and not line.startswith('Waiting') and not line.startswith('Source'):
+                        # Log MIDI data with route information
+                        logger.info(f"[MIDI DEBUG] {source_name}({source_port}) -> {dest_name}({dest_port}): {line}")
             
-            process.stdout.close()
-            process.wait()
+            # Cleanup process
+            if process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    
+            if process.stdout:
+                process.stdout.close()
             
         except Exception as e:
             logger.error(f"Error in debug monitor thread for {source_name} -> {dest_name}: {e}")
@@ -690,16 +706,24 @@ class MIDIAdapter:
         """Clean up all resources"""
         self.running = False
         
-        # Stop debug monitor processes
+        # Stop debug monitor processes with thread safety
         if self.debug_processes:
             logger.info("Stopping MIDI debug monitors...")
-            for process in self.debug_processes:
-                try:
-                    process.terminate()
-                    process.wait(timeout=2)
-                except Exception:
-                    pass
-            self.debug_processes.clear()
+            with self.debug_lock:
+                for process in self.debug_processes:
+                    try:
+                        # Check if process is still running
+                        if process.poll() is None:
+                            process.terminate()
+                            try:
+                                process.wait(timeout=3)
+                            except subprocess.TimeoutExpired:
+                                logger.warning("Debug process did not terminate, forcing kill")
+                                process.kill()
+                                process.wait()
+                    except Exception as e:
+                        logger.error(f"Error stopping debug process: {e}")
+                self.debug_processes.clear()
         
         # Cleanup all devices
         for device in self.devices.values():
