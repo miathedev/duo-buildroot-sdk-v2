@@ -26,3 +26,13 @@ This repository includes a complete configuration for building a **USB MIDI to D
 
 📖 **Full Documentation**: [MIDI_ADAPTER.md](MIDI_ADAPTER.md)
 
+### CI/CD Pipeline
+
+This repository includes a **GitLab CI pipeline** for automated builds:
+- Automatic SD card image generation
+- Compressed artifacts for easy download
+- Release packages with documentation
+- Nightly builds support
+
+📋 **CI Documentation**: [GITLAB_CI.md](GITLAB_CI.md)
+
