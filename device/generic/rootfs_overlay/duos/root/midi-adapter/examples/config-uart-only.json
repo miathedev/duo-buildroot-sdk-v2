@@ -1,0 +1,44 @@
+{
+  "description": "UART/DIN MIDI Only - USB MIDI to DIN MIDI converter",
+  "version": "2.0",
+  
+  "devices": {
+    "usb_midi": {
+      "type": "usb_midi",
+      "enabled": true,
+      "alias": "USB_MIDI",
+      "comment": "USB MIDI input device"
+    },
+    "din_midi": {
+      "type": "uart_midi",
+      "enabled": true,
+      "device": "/dev/ttyS4",
+      "baudrate": 31250,
+      "direction": "output",
+      "alias": "DIN_MIDI",
+      "comment": "Hardware UART for DIN MIDI output"
+    }
+  },
+  
+  "routing_profiles": {
+    "default": {
+      "enabled": true,
+      "description": "Simple USB to DIN MIDI routing",
+      "routes": [
+        {
+          "source": "usb_midi",
+          "destination": "din_midi",
+          "enabled": true,
+          "comment": "Route USB MIDI to DIN MIDI via UART"
+        }
+      ]
+    }
+  },
+  
+  "settings": {
+    "active_profile": "default",
+    "auto_connect": true,
+    "log_level": "INFO",
+    "debug_midi": false
+  }
+}

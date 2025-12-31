@@ -33,3 +33,12 @@ insmod /mnt/system/ko/aic8800_fdrv.ko
 # Insmod PWM Module
 insmod /mnt/system/ko/cv181x_pwm.ko
 
+# Configure USB Host mode for MIDI devices
+/mnt/system/usb-host.sh
+
+# Load ALSA MIDI kernel modules
+modprobe snd-seq 2>/dev/null || true
+modprobe snd-seq-midi 2>/dev/null || true
+modprobe snd-rawmidi 2>/dev/null || true
+modprobe snd-usb-midi 2>/dev/null || true
+

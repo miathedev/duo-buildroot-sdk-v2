@@ -1,0 +1,16 @@
+# Network interfaces configuration for MilkV Duo S MIDI Adapter
+
+# Loopback interface
+auto lo
+iface lo inet loopback
+
+# Ethernet interface with DHCP
+auto eth0
+iface eth0 inet dhcp
+    hostname milkv-duos-midi
+    
+# Optional static IP configuration (commented out by default)
+# iface eth0 inet static
+#     address 192.168.1.100
+#     netmask 255.255.255.0
+#     gateway 192.168.1.1

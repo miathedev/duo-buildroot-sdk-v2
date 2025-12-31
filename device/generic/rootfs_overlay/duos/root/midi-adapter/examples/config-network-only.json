@@ -1,0 +1,45 @@
+{
+  "description": "Network MIDI Only - USB MIDI to Network MIDI bridge",
+  "version": "2.0",
+  
+  "devices": {
+    "usb_midi": {
+      "type": "usb_midi",
+      "enabled": true,
+      "alias": "USB_MIDI",
+      "comment": "USB MIDI input device"
+    },
+    "network_midi_output": {
+      "type": "network_midi_rtp",
+      "enabled": true,
+      "target_ip": "192.168.1.100",
+      "port": 5004,
+      "multicast": false,
+      "direction": "output",
+      "alias": "NET_OUT",
+      "comment": "Network MIDI output - sends MIDI to specific IP (client mode)"
+    }
+  },
+  
+  "routing_profiles": {
+    "default": {
+      "enabled": true,
+      "description": "Simple USB to Network routing",
+      "routes": [
+        {
+          "source": "usb_midi",
+          "destination": "network_midi_output",
+          "enabled": true,
+          "comment": "Route USB MIDI to Network MIDI"
+        }
+      ]
+    }
+  },
+  
+  "settings": {
+    "active_profile": "default",
+    "auto_connect": true,
+    "log_level": "INFO",
+    "debug_midi": false
+  }
+}
