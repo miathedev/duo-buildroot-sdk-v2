@@ -6,6 +6,7 @@ This configuration transforms the MilkV Duo S into a versatile MIDI adapter that
 - **DIN MIDI** output (via Hardware UART)
 - **Network MIDI** (via Ethernet using RTP-MIDI protocol)
 - **GPIO Buttons** for control and triggering
+- **Web-Based Configuration** interface for easy setup
 
 ## Features
 
@@ -14,9 +15,23 @@ This configuration transforms the MilkV Duo S into a versatile MIDI adapter that
 - ✅ Network MIDI over Ethernet (RTP-MIDI compatible)
 - ✅ GPIO button support for custom control actions
 - ✅ Flexible routing configuration via JSON
+- ✅ **Web-based configuration GUI** (NEW in v2.1)
+- ✅ **Hot-reload configuration** without service restart
+- ✅ Real-time MIDI debugging and monitoring
 - ✅ DHCP network configuration
 - ✅ Automatic startup on boot
 - ✅ Python-based, easy to customize
+
+## Quick Start
+
+### Access Web GUI (Easiest Method)
+1. Power on your MilkV Duo S with the MIDI adapter image
+2. Connect via Ethernet (DHCP will assign an IP)
+3. Find device IP: Check your router or run `ip addr` on device
+4. Open browser to `http://<device-ip>:8080`
+5. Configure MIDI routing through the web interface!
+
+**See [WEB_GUI_README.md](WEB_GUI_README.md) for detailed web GUI documentation.**
 
 ## Hardware Requirements
 
@@ -77,6 +92,48 @@ Optocoupler Output ──────────────── DIN Pin 4 (M
    - Manages MIDI routing
    - Handles GPIO button events
    - Configures UART and network MIDI
+   - Responds to SIGHUP for configuration reload
+
+4. **Web Configuration GUI** (`webui/app.py`) - NEW in v2.1
+   - Flask-based web interface (Port 8080)
+   - Real-time configuration editor
+   - Service control and monitoring
+   - Independent from main MIDI application
+   - See [WEB_GUI_README.md](WEB_GUI_README.md) for details
+
+### Service Architecture
+
+The system runs two independent services:
+
+#### Main MIDI Adapter Service
+- **Init Script**: `/etc/init.d/S98midi-adapter`
+- **PID File**: `/var/run/midi-adapter.pid`
+- **Log File**: `/var/log/midi-adapter.log`
+- **Purpose**: Handles all MIDI routing and device management
+- **Commands**:
+  ```bash
+  /etc/init.d/S98midi-adapter start    # Start service
+  /etc/init.d/S98midi-adapter stop     # Stop service
+  /etc/init.d/S98midi-adapter restart  # Full restart
+  /etc/init.d/S98midi-adapter reload   # Hot-reload config (SIGHUP)
+  /etc/init.d/S98midi-adapter status   # Check status
+  ```
+
+#### Web GUI Service (Optional)
+- **Init Script**: `/etc/init.d/S99midi-webui`
+- **PID File**: `/var/run/midi-webui.pid`
+- **Log File**: `/var/log/midi-webui.log`
+- **Purpose**: Provides web-based configuration interface
+- **Port**: 8080 (HTTP)
+- **Commands**:
+  ```bash
+  /etc/init.d/S99midi-webui start     # Start web GUI
+  /etc/init.d/S99midi-webui stop      # Stop web GUI
+  /etc/init.d/S99midi-webui restart   # Restart web GUI
+  /etc/init.d/S99midi-webui status    # Check status
+  ```
+
+**Note**: Main MIDI adapter works independently. Web GUI is optional.
 
 ## Building the Image
 

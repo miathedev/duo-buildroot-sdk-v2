@@ -11,6 +11,7 @@
 
 DAEMON=/root/midi-adapter/midi_adapter.py
 PIDFILE=/var/run/midi-adapter.pid
+LOGFILE=/var/log/midi-adapter.log
 CONFIG=/root/midi-adapter/config.json
 
 case "$1" in
@@ -26,16 +27,16 @@ case "$1" in
       exit 1
     fi
     
-    # Start the adapter in background
+    # Start the adapter in background with logging
     start-stop-daemon --start --background --make-pidfile --pidfile $PIDFILE \
-      --exec /usr/bin/python3 -- $DAEMON $CONFIG
+      --exec /usr/bin/python3 -- $DAEMON $CONFIG >> $LOGFILE 2>&1
     
     echo "MIDI Adapter started"
     ;;
     
   stop)
     echo "Stopping MIDI Adapter..."
-    start-stop-daemon --stop --pidfile $PIDFILE
+    start-stop-daemon --stop --pidfile $PIDFILE --retry 10
     rm -f $PIDFILE
     echo "MIDI Adapter stopped"
     ;;
@@ -44,6 +45,23 @@ case "$1" in
     $0 stop
     sleep 2
     $0 start
+    ;;
+    
+  reload)
+    echo "Reloading MIDI Adapter configuration..."
+    if [ -f $PIDFILE ]; then
+      PID=$(cat $PIDFILE)
+      if ps -p $PID > /dev/null 2>&1; then
+        kill -HUP $PID
+        echo "Configuration reload signal sent"
+      else
+        echo "MIDI Adapter is not running"
+        exit 1
+      fi
+    else
+      echo "MIDI Adapter is not running"
+      exit 1
+    fi
     ;;
     
   status)
@@ -60,7 +78,7 @@ case "$1" in
     ;;
     
   *)
-    echo "Usage: $0 {start|stop|restart|status}"
+    echo "Usage: $0 {start|stop|restart|reload|status}"
     exit 1
     ;;
 esac
